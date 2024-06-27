@@ -18,6 +18,14 @@ const SiderComponent = () => {
             key: "Products",
             label: <Link href={"/products"}>Products</Link>,
           },
+          {
+            key: "Brands",
+            label: <Link href={"/brands"}>Brands</Link>,
+          },
+          {
+            key: "Categories",
+            label: <Link href={"/categories"}>Categories</Link>,
+          },
         ]}
       />
     </Sider>

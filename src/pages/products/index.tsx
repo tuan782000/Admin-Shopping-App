@@ -84,15 +84,16 @@ const Products = () => {
     {
       key: "btn",
       dataIndex: "",
+      title: "Actions",
       align: "right",
       render: (item: ProductModel) => (
         <Space>
-          <Tooltip title={"Remove item"}>
+          <Tooltip title={`Remove ${item.title}`}>
             <Button
               onClick={() =>
                 confirm({
                   title: "Remove",
-                  content: "Are you sure you want to delete it?",
+                  content: `Are you sure you want to delete ${item.title}?`,
                   onOk: () => handleRemoveProduct(item._id),
                   okText: "Delete", // button xoá trong modal
                 })
