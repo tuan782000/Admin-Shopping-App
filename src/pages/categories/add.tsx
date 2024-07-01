@@ -1,7 +1,5 @@
-import { Button, Card, Form, Image, Input, Space, message } from "antd";
-import { useForm } from "antd/es/form/Form";
-import React, { useRef, useState } from "react";
-import { handleBrandAPI } from "../api/brandAPI";
+import { Button, Card, Form, Input, Space, message } from "antd";
+import { useState } from "react";
 import { handleCategoryAPI } from "../api/categoryAPI";
 
 const AddNewCategory = () => {
@@ -67,15 +65,20 @@ const AddNewCategory = () => {
             <Input placeholder="Title" allowClear maxLength={150} showCount />
           </Form.Item>
           <Form.Item
-            name={"key"}
+            name={"Description"}
             rules={[
               {
                 required: true,
-                message: "key is required",
+                message: "Description is required",
               },
             ]}
           >
-            <Input placeholder="Key" allowClear maxLength={150} showCount />
+            <Input
+              placeholder="Description"
+              allowClear
+              maxLength={150}
+              showCount
+            />
           </Form.Item>
         </Form>
         <div className="text-end mt-4">

@@ -1,4 +1,4 @@
-import { Button, Image, Modal, Space, Tooltip, message } from "antd";
+import { Avatar, Button, Image, Modal, Space, Tooltip, message } from "antd";
 import React, { useEffect, useState } from "react";
 import { handleProductAPI } from "../api/productAPI";
 import Table, { ColumnProps } from "antd/es/table";
@@ -17,7 +17,7 @@ const Products = () => {
   }, []);
   const handleGetProducts = async () => {
     setIsLoading(true);
-    const api = "/all";
+    const api = "/all-products";
     try {
       const res = await handleProductAPI(api, "get"); // nhận 3 tham số api, data, và method - xem lại productAPI
       //   if (res) {
@@ -35,7 +35,7 @@ const Products = () => {
 
   const handleRemoveProduct = async (id: String) => {
     setIsLoading(true);
-    const api = `/remove?id=${id}`;
+    const api = `/remove-product?id=${id}`;
 
     try {
       await handleProductAPI(api, undefined, "delete");
@@ -52,8 +52,15 @@ const Products = () => {
   const columns: ColumnProps<ProductModel>[] = [
     {
       key: "img",
-      dataIndex: "img",
-      render: (url: string) => <Image src={url} style={{ width: 120 }} />,
+      dataIndex: "imageURL",
+      render: (url: string) => (
+        <Image
+          src={url}
+          width={100}
+          height={100}
+          style={{ objectFit: "cover" }}
+        />
+      ),
     },
     {
       key: "title",

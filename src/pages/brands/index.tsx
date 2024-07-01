@@ -53,8 +53,15 @@ const Brands = () => {
   const columns: ColumnProps<BrandModel>[] = [
     {
       key: "img",
-      dataIndex: "img",
-      render: (url: string) => <Image src={url} style={{ width: 120 }} />,
+      dataIndex: "imageURL",
+      render: (url: string) => (
+        <Image
+          src={url}
+          width={100}
+          height={100}
+          style={{ objectFit: "cover" }}
+        />
+      ),
     },
     {
       key: "title",

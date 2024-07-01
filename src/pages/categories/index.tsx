@@ -3,14 +3,18 @@ import React, { useEffect, useState } from "react";
 import { handleCategoryAPI } from "../api/categoryAPI";
 import { Button, Image, Modal, Space, Tooltip, message } from "antd";
 import Table, { ColumnProps } from "antd/es/table";
-import { BiTrash } from "react-icons/bi";
+import { BiPencil, BiTrash } from "react-icons/bi";
 import Link from "next/link";
+import { BsEye } from "react-icons/bs";
+import { CategoryModal } from "@/modals";
 
 const { confirm } = Modal;
 
 const Categories = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [categories, setCategories] = useState<CategoryModel[]>([]);
+
+  const [isVisibleCategory, setIsVisibleCategory] = useState(false);
 
   useEffect(() => {
     handleGetCategory();
@@ -53,11 +57,6 @@ const Categories = () => {
 
   const columns: ColumnProps<CategoryModel>[] = [
     {
-      key: "img",
-      dataIndex: "img",
-      render: (url: string) => <Image src={url} style={{ width: 120 }} />,
-    },
-    {
       key: "title",
       dataIndex: "title",
       title: "Title",
@@ -72,6 +71,20 @@ const Categories = () => {
       align: "right",
       render: (item: CategoryModel) => (
         <Space>
+          <Tooltip title={`Detail ${item.title}`}>
+            <Button
+              type="text"
+              icon={<BsEye size={20} color={"#1e90ff"} />}
+              onClick={() => setIsVisibleCategory(true)}
+            />
+          </Tooltip>
+          <Tooltip title={`Edit ${item.title}`}>
+            <Button
+              type="text"
+              href={`/categories/edit/${item._id}`}
+              icon={<BiPencil size={20} color={"#FFDF00"} />}
+            />
+          </Tooltip>
           <Tooltip title={`Remove ${item.title}`}>
             <Button
               onClick={() =>
@@ -94,12 +107,18 @@ const Categories = () => {
     <div>
       <div className="mb-3 row">
         <div className="col text-end">
-          <Link href={"/categories/add-new"} className="btn btn-sm btn-success">
+          <Link href={"/categories/add"} className="btn btn-sm btn-success">
             Add new
           </Link>
         </div>
       </div>
       <Table loading={isLoading} dataSource={categories} columns={columns} />
+
+      <CategoryModal
+        visible={isVisibleCategory}
+        onClose={() => setIsVisibleCategory(false)}
+        detail
+      />
     </div>
   );
 };

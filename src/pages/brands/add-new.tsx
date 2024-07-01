@@ -2,6 +2,9 @@ import { Button, Card, Form, Image, Input, Space, message } from "antd";
 import { useForm } from "antd/es/form/Form";
 import React, { useRef, useState } from "react";
 import { handleBrandAPI } from "../api/brandAPI";
+import { FaTimesCircle } from "react-icons/fa";
+import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
+import { storageFirebase } from "@/firebase/firebaseConfig";
 
 const AddNewBrand = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -10,12 +13,24 @@ const AddNewBrand = () => {
 
   const inputRef = useRef<any>();
 
+  // console.log(files);
+
   const handleAddNewBrand = async (values: any) => {
     setIsLoading(true);
     const data = { ...values };
+    console.log(data);
     const api = "/add-brand";
 
     if (files) {
+      const file = files[0];
+      const name = file.name;
+
+      const path = ref(storageFirebase, `/images/${name}`);
+
+      await uploadBytes(path, file);
+      const downloadURL = await getDownloadURL(path);
+
+      data.imageURL = downloadURL;
     }
 
     try {
@@ -31,15 +46,37 @@ const AddNewBrand = () => {
     }
   };
 
+  const handleDeleteFile = () => {
+    // khi xoá sẽ cập nhật setFile đồng thời set ref về rỗng để xoá hẳn
+    setFiles(undefined);
+    if (inputRef.current) {
+      inputRef.current.value = "";
+    }
+  };
+
   return (
     <div className="col-8 offset-2">
       <Card title="Add new brand">
         <div className="mb-4">
           {files && (
-            <div className="mb-4">
+            <div
+              className="mb-4"
+              style={{ position: "relative", width: 150, height: 100 }}
+            >
               <Image
-                src={URL.createObjectURL(files[0])}
                 style={{ width: 150, height: 100 }}
+                src={URL.createObjectURL(files[0])}
+              />
+              <FaTimesCircle
+                style={{
+                  position: "absolute",
+                  top: -14,
+                  right: -10,
+                  cursor: "pointer",
+                  color: "red",
+                  fontSize: "20px",
+                }}
+                onClick={handleDeleteFile}
               />
             </div>
           )}
@@ -66,15 +103,20 @@ const AddNewBrand = () => {
             <Input placeholder="Title" allowClear maxLength={150} showCount />
           </Form.Item>
           <Form.Item
-            name={"key"}
+            name={"Description"}
             rules={[
               {
                 required: true,
-                message: "key is required",
+                message: "Description is required",
               },
             ]}
           >
-            <Input placeholder="Key" allowClear maxLength={150} showCount />
+            <Input
+              placeholder="Description"
+              allowClear
+              maxLength={150}
+              showCount
+            />
           </Form.Item>
         </Form>
         <div className="text-end mt-4">

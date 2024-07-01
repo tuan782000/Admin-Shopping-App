@@ -1,7 +1,7 @@
 export interface CategoryModel {
   _id: string;
   title: string;
-  key: string;
+  description: string;
   createdAt: string;
   updatedAt: string;
 }
