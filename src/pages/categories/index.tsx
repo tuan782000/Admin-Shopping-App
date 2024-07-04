@@ -7,14 +7,17 @@ import { BiPencil, BiTrash } from "react-icons/bi";
 import Link from "next/link";
 import { BsEye } from "react-icons/bs";
 import { CategoryModal } from "@/modals";
+import { PlusOutlined } from "@ant-design/icons";
 
 const { confirm } = Modal;
 
 const Categories = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [categories, setCategories] = useState<CategoryModel[]>([]);
+  const [categorySelected, setCategorySelected] = useState<CategoryModel>();
 
   const [isVisibleCategory, setIsVisibleCategory] = useState(false);
+  const [isDetail, setIsDetail] = useState(false);
 
   useEffect(() => {
     handleGetCategory();
@@ -75,13 +78,20 @@ const Categories = () => {
             <Button
               type="text"
               icon={<BsEye size={20} color={"#1e90ff"} />}
-              onClick={() => setIsVisibleCategory(true)}
+              onClick={() => {
+                setIsDetail(true);
+                setCategorySelected(item);
+                setIsVisibleCategory(true);
+              }}
             />
           </Tooltip>
           <Tooltip title={`Edit ${item.title}`}>
             <Button
               type="text"
-              href={`/categories/edit/${item._id}`}
+              onClick={() => {
+                setCategorySelected(item);
+                setIsVisibleCategory(true);
+              }}
               icon={<BiPencil size={20} color={"#FFDF00"} />}
             />
           </Tooltip>
@@ -107,17 +117,32 @@ const Categories = () => {
     <div>
       <div className="mb-3 row">
         <div className="col text-end">
-          <Link href={"/categories/add"} className="btn btn-sm btn-success">
+          {/* <Link href={"/categories/add"} className="btn btn-sm btn-success">
             Add new
-          </Link>
+          </Link> */}
+          <Button
+            // className="btn btn-success"
+            onClick={() => setIsVisibleCategory(true)}
+            iconPosition="start"
+            icon={<PlusOutlined />}
+            style={{ backgroundColor: "#198754", color: "white" }}
+          >
+            Add New
+          </Button>
         </div>
       </div>
       <Table loading={isLoading} dataSource={categories} columns={columns} />
 
       <CategoryModal
         visible={isVisibleCategory}
-        onClose={() => setIsVisibleCategory(false)}
-        detail
+        onClose={() => {
+          setCategorySelected(undefined);
+          setIsVisibleCategory(false);
+          setIsDetail(false);
+        }}
+        onReload={handleGetCategory}
+        category={categorySelected}
+        detail={isDetail}
       />
     </div>
   );

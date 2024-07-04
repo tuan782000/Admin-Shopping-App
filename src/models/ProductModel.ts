@@ -1,13 +1,16 @@
 export interface ProductModel {
-  _id: string;
-  title: string;
-  price: number;
+  categories: any[];
+  createdAt: string;
   description: string;
   imageURL: string;
-  rate: any;
-  sizes: string[];
-  likedBys: string[];
+  likedBys: any[];
+  price: number;
   quantity: number;
-  createdAt: string;
+  sizes: string[];
+  title: string;
   updatedAt: string;
+  views: number;
+  _id: string;
+  rate: any;
+  brands: string;
 }

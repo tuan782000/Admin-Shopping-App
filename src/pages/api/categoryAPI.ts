@@ -1,7 +1,5 @@
 import axiosClient from "./axiosClient";
 
-// liên quan tới authen thì gọi vào đây
-
 export const handleCategoryAPI = async (
   url: string,
   data?: any,

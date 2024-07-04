@@ -3,8 +3,9 @@ import React, { useEffect, useState } from "react";
 import { handleProductAPI } from "../api/productAPI";
 import Table, { ColumnProps } from "antd/es/table";
 import { ProductModel } from "@/models/ProductModel";
-import { BiTrash } from "react-icons/bi";
+import { BiPencil, BiTrash } from "react-icons/bi";
 import Link from "next/link";
+import { useRouter } from "next/router";
 
 const { confirm } = Modal;
 
@@ -12,9 +13,12 @@ const Products = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [products, setProducts] = useState<ProductModel[]>([]);
 
+  const router = useRouter();
+
   useEffect(() => {
     handleGetProducts();
   }, []);
+
   const handleGetProducts = async () => {
     setIsLoading(true);
     const api = "/all-products";
@@ -64,8 +68,12 @@ const Products = () => {
     },
     {
       key: "title",
-      dataIndex: "title",
+      // dataIndex: "title", // nếu để title chỉ lấy title - không để lấy hết
+      dataIndex: "",
       title: "Title",
+      render: (item) => (
+        <Link href={`/products/${item._id}`}>{item.title}</Link>
+      ),
       // sort
       sorter: (a: ProductModel, b: ProductModel) =>
         a.title.localeCompare(b.title),
@@ -95,6 +103,13 @@ const Products = () => {
       align: "right",
       render: (item: ProductModel) => (
         <Space>
+          <Tooltip title={`Edit ${item.title}`}>
+            <Button
+              type="text"
+              href={`/products/add-new?id=${item._id}&isEdit=true`}
+              icon={<BiPencil size={20} color={"#FFDF00"} />}
+            />
+          </Tooltip>
           <Tooltip title={`Remove ${item.title}`}>
             <Button
               onClick={() =>
@@ -114,10 +129,26 @@ const Products = () => {
     },
   ];
 
+  // Làm chức năng fake data views
+  // const handleUpdateView = () => {
+  //   products.forEach(async (item) => {
+  //     // console.log(item);
+  //     const api = `/update-product/${item._id}`;
+  //     await handleProductAPI(
+  //       api,
+  //       { views: Math.floor(Math.random() * 1000) },
+  //       "put"
+  //     );
+
+  //     console.log("done");
+  //   });
+  // };
+  console.log(products);
   return (
     <div>
       <div className="mb-3 row">
         <div className="col text-end">
+          {/* <Button onClick={handleUpdateView}>Update Views</Button> */}
           <Link href={"/products/add-new"} className="btn btn-sm btn-success">
             Add new
           </Link>

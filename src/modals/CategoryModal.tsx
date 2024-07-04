@@ -1,7 +1,7 @@
 import { CategoryModel } from "@/models/CategoryModel";
 import { handleCategoryAPI } from "@/pages/api/categoryAPI";
 import { Button, Form, Input, Modal, Space, message } from "antd";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 
 type Props = {
   visible: boolean; // trạng thái mở hoặc không
@@ -17,6 +17,12 @@ const CategoryModal = (props: Props) => {
 
   const [form] = Form.useForm();
 
+  useEffect(() => {
+    if (category) {
+      form.setFieldsValue(category);
+    }
+  }, [detail, category]);
+
   const handleClose = () => {
     form.resetFields();
     onClose();
@@ -24,12 +30,15 @@ const CategoryModal = (props: Props) => {
 
   const handleCategory = async (values: any) => {
     setIsLoading(true);
-    const api = "/add-category";
+    // /update-brand/:id
+    const api = category ? `/edit-category/${category._id}` : "/add-category";
 
     try {
-      await handleCategoryAPI(api, values, "post");
+      await handleCategoryAPI(api, values, category ? "put" : "post");
 
-      message.success("Added category success");
+      message.success(
+        category ? "Updated category success" : "Added category success"
+      );
 
       handleClose();
 
@@ -41,14 +50,18 @@ const CategoryModal = (props: Props) => {
     }
   };
 
-  return detail ? (
+  return detail && category ? (
     <Modal
       open={visible}
       onClose={handleClose}
       onCancel={handleClose}
-      title="Detail"
+      title="Detail Category"
+      footer={null}
     >
-      <p>Hello</p>
+      <p style={{ fontSize: 18 }}>Title: {category.title}</p>
+      {category.description && (
+        <p style={{ fontSize: 18 }}>Description: {category.description}</p>
+      )}
     </Modal>
   ) : (
     <Modal
@@ -61,7 +74,7 @@ const CategoryModal = (props: Props) => {
         loading: isLoading,
       }}
       onOk={() => form.submit()}
-      okText="Create"
+      okText={category ? "Update" : "Create"}
       // Bạn có thể tự custom
       //   footer={
       //     <>

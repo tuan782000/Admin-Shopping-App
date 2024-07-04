@@ -103,7 +103,7 @@ const AddNewBrand = () => {
             <Input placeholder="Title" allowClear maxLength={150} showCount />
           </Form.Item>
           <Form.Item
-            name={"Description"}
+            name={"description"}
             rules={[
               {
                 required: true,

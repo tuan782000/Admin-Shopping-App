@@ -15,7 +15,7 @@ const SiderComponent = () => {
 
   return (
     <Sider
-      style={{ height: "100vh" }}
+      style={{ height: "100vh", minHeight: "100%" }}
       collapsible
       collapsed={collapsed}
       onCollapse={(value) => setCollapsed(value)}

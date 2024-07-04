@@ -19,10 +19,15 @@ import { handleCategoryAPI } from "../api/categoryAPI";
 import { handleBrandAPI } from "../api/brandAPI";
 import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
 import { storageFirebase } from "@/firebase/firebaseConfig";
+import { useSearchParams } from "next/navigation";
+import { LeftOutlined } from "@ant-design/icons";
+import { useRouter } from "next/router";
 
 const AddNewProduct = () => {
   const [files, setFiles] = useState<any>();
   const [isLoading, setIsLoading] = useState(false);
+
+  const [imageURL, setImageURL] = useState("");
 
   const [brands, setBrands] = useState<SelectModel[]>([]);
   const [categories, setCategories] = useState<SelectModel[]>([]);
@@ -33,16 +38,33 @@ const AddNewProduct = () => {
   const [form] = Form.useForm(); // cái này giống useRef - form kết nối form bên dưới để xử lý thông tin
   const inputRef = useRef<any>();
 
+  // dựa vào thanh url truyền vào
+  const searchParams = useSearchParams();
+  // lấy id
+  const id = searchParams.get("id");
+
+  const router = useRouter();
+
+  const handleBack = () => {
+    router.back();
+  };
+
   useEffect(() => {
     handleGetCategories();
     handleGetBrands();
   }, []);
 
+  // theo dõi id useEffect sẽ gọi
+  useEffect(() => {
+    id && getProductDetailById(id);
+  }, [id]);
+
+  // vừa là thêm mới - vừa là sử
   const handleAddNewProduct = async (values: any) => {
     // setIsLoading(true);
     // console.log(value);
     const data = { ...values };
-    const api = "/add-product";
+    const api = id ? `/update-product/${id}` : "/add-product";
 
     if (files) {
       // console.log(files);
@@ -73,10 +95,13 @@ const AddNewProduct = () => {
 
       // console.log(res);
 
-      await handleProductAPI(api, data, "post");
-      message.success("Add new product successfully");
+      await handleProductAPI(api, data, id ? "put" : "post");
+      message.success(
+        id ? "Update product successfully" : "Add new product successfully"
+      );
       form.resetFields();
       handleDeleteFile();
+
       window.history.back();
 
       console.log(data);
@@ -147,198 +172,252 @@ const AddNewProduct = () => {
     }
   };
 
+  const getProductDetailById = async (id: string) => {
+    setIsLoading(true);
+    const api = `/detail-product/${id}`;
+
+    try {
+      const res = await handleProductAPI(api);
+      // console.log(res);
+      if (res.data) {
+        // console.log(res.data);
+        // điền dữ liệu 1 cách tự động cho các ô input đã tồn tại dữ liệu
+        form.setFieldsValue(res.data);
+        setImageURL(res.data.imageURL);
+      }
+    } catch (error: any) {
+      message.error(error.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
-    <div className="col-8 offset-2">
-      <Card title="Add new product">
-        <div className="mb-4">
-          {files && (
-            <div
-              className="mb-4"
-              style={{ position: "relative", width: 150, height: 100 }}
-            >
-              <Image
-                style={{ width: 150, height: 100, objectFit: "cover" }}
-                src={URL.createObjectURL(files[0])}
-              />
-              <FaTimesCircle
-                style={{
-                  position: "absolute",
-                  top: -14,
-                  right: -10,
-                  cursor: "pointer",
-                  color: "red",
-                  fontSize: "20px",
-                }}
-                onClick={handleDeleteFile}
-              />
-            </div>
-          )}
-          <Button disabled={isLoading} onClick={() => inputRef.current.click()}>
-            Upload Image
-          </Button>
-        </div>
-        <Form
-          disabled={isLoading}
-          form={form}
-          size="large"
-          layout="vertical"
-          onFinish={handleAddNewProduct}
-        >
-          <Form.Item
-            name={"title"}
-            label={<Space>Title</Space>}
-            rules={[
-              {
-                required: true,
-                message: "title is required",
-              },
-            ]}
-          >
-            <Input placeholder="Title" allowClear maxLength={150} showCount />
-          </Form.Item>
-          <Form.Item
-            name={"description"}
-            label={<Space>Description</Space>}
-            rules={[
-              {
-                required: true,
-                message: "title is required",
-              },
-            ]}
-          >
-            <Input.TextArea rows={3} placeholder="Description" allowClear />
-          </Form.Item>
-          <div className="row">
-            <div className="col">
-              <Form.Item
-                name="categories"
-                label={
-                  <Space>
-                    Categories
-                    <Tooltip title="Add new Category">
-                      <BsPlusCircleFill
-                        style={{ color: "green" }}
-                        onClick={() => setIsVisibleAddNewCategory(true)}
-                      />
-                    </Tooltip>
-                  </Space>
-                }
+    <>
+      <Button
+        type="text"
+        onClick={handleBack}
+        icon={<LeftOutlined />}
+        iconPosition="start"
+      >
+        Back
+      </Button>
+      <div className="col-8 offset-2">
+        <Card title="Add new product">
+          <div className="mb-4">
+            {files ? (
+              <div
+                className="mb-4"
+                style={{ position: "relative", width: 150, height: 100 }}
               >
-                <Select
-                  mode="multiple"
-                  placeholder="Categories"
-                  options={categories}
+                <Image
+                  style={{ width: 150, height: 100, objectFit: "cover" }}
+                  src={URL.createObjectURL(files[0])}
                 />
-              </Form.Item>
-            </div>
-            <div className="col">
-              <Form.Item
-                name="brands"
-                label={
-                  <Space>
-                    Brands
-                    <Tooltip title="Add new Brand">
-                      <BsPlusCircleFill
-                        style={{ color: "green" }}
-                        onClick={() => setIsVisibleAddNewBrand(true)}
-                      />
-                    </Tooltip>
-                  </Space>
-                }
+                <FaTimesCircle
+                  style={{
+                    position: "absolute",
+                    top: -14,
+                    right: -10,
+                    cursor: "pointer",
+                    color: "red",
+                    fontSize: "20px",
+                  }}
+                  onClick={handleDeleteFile}
+                />
+              </div>
+            ) : imageURL ? (
+              <div
+                className="mb-4"
+                style={{ position: "relative", width: 150, height: 100 }}
               >
-                <Select placeholder="Brands" options={brands} />
-              </Form.Item>
-            </div>
+                <Image
+                  style={{ width: 150, height: 100, objectFit: "cover" }}
+                  src={imageURL}
+                />
+                <FaTimesCircle
+                  style={{
+                    position: "absolute",
+                    top: -14,
+                    right: -10,
+                    cursor: "pointer",
+                    color: "red",
+                    fontSize: "20px",
+                  }}
+                  onClick={handleDeleteFile}
+                />
+              </div>
+            ) : null}
+            <Button
+              disabled={isLoading}
+              onClick={() => inputRef.current.click()}
+            >
+              Upload Image
+            </Button>
           </div>
-          <div className="row">
-            <div className="col">
-              <Form.Item
-                label={<Space>Price</Space>}
-                name={"price"}
-                rules={[
-                  {
-                    required: true,
-                    message: "price is required",
-                  },
-                ]}
-              >
-                <Input placeholder="Price" allowClear type="number" />
-              </Form.Item>
+          <Form
+            disabled={isLoading}
+            form={form}
+            size="large"
+            layout="vertical"
+            onFinish={handleAddNewProduct}
+          >
+            <Form.Item
+              name={"title"}
+              label={<Space>Title</Space>}
+              rules={[
+                {
+                  required: true,
+                  message: "title is required",
+                },
+              ]}
+            >
+              <Input placeholder="Title" allowClear maxLength={150} showCount />
+            </Form.Item>
+            <Form.Item
+              name={"description"}
+              label={<Space>Description</Space>}
+              rules={[
+                {
+                  required: true,
+                  message: "title is required",
+                },
+              ]}
+            >
+              <Input.TextArea rows={3} placeholder="Description" allowClear />
+            </Form.Item>
+            <div className="row">
+              <div className="col">
+                <Form.Item
+                  name="categories"
+                  label={
+                    <Space>
+                      Categories
+                      <Tooltip title="Add new Category">
+                        <BsPlusCircleFill
+                          style={{ color: "green" }}
+                          onClick={() => setIsVisibleAddNewCategory(true)}
+                        />
+                      </Tooltip>
+                    </Space>
+                  }
+                >
+                  <Select
+                    mode="multiple"
+                    placeholder="Categories"
+                    options={categories}
+                  />
+                </Form.Item>
+              </div>
+              <div className="col">
+                <Form.Item
+                  name="brands"
+                  label={
+                    <Space>
+                      Brands
+                      <Tooltip title="Add new Brand">
+                        <BsPlusCircleFill
+                          style={{ color: "green" }}
+                          onClick={() => setIsVisibleAddNewBrand(true)}
+                        />
+                      </Tooltip>
+                    </Space>
+                  }
+                >
+                  <Select placeholder="Brands" options={brands} />
+                </Form.Item>
+              </div>
             </div>
-            <div className="col">
-              <Form.Item label={<Space>Sizes</Space>} name={"sizes"}>
-                <Select
-                  placeholder="Sizes"
-                  allowClear
-                  mode="multiple"
-                  options={[
-                    { label: "S", value: "S" },
-                    { label: "M", value: "M" },
-                    { label: "L", value: "L" },
-                    { label: "X", value: "X" },
-                    { label: "XL", value: "XL" },
-                    { label: "XXL", value: "XXL" },
-                    { label: "XXXL", value: "XXXL" },
+            <div className="row">
+              <div className="col">
+                <Form.Item
+                  label={<Space>Price</Space>}
+                  name={"price"}
+                  rules={[
+                    {
+                      required: true,
+                      message: "price is required",
+                    },
                   ]}
-                />
-              </Form.Item>
+                >
+                  <Input placeholder="Price" allowClear type="number" />
+                </Form.Item>
+              </div>
+              <div className="col">
+                <Form.Item label={<Space>Sizes</Space>} name={"sizes"}>
+                  <Select
+                    placeholder="Sizes"
+                    allowClear
+                    mode="multiple"
+                    options={[
+                      { label: "S", value: "S" },
+                      { label: "M", value: "M" },
+                      { label: "L", value: "L" },
+                      { label: "X", value: "X" },
+                      { label: "XL", value: "XL" },
+                      { label: "XXL", value: "XXL" },
+                      { label: "XXXL", value: "XXXL" },
+                    ]}
+                  />
+                </Form.Item>
+              </div>
+              <div className="col">
+                <Form.Item label={<Space>Quantity</Space>} name={"quantity"}>
+                  <Input placeholder="Quantity" allowClear type="number" />
+                </Form.Item>
+              </div>
             </div>
-            <div className="col">
-              <Form.Item label={<Space>Quantity</Space>} name={"quantity"}>
-                <Input placeholder="Quantity" allowClear type="number" />
-              </Form.Item>
-            </div>
+          </Form>
+          <div className="text-end mt-4">
+            <Space>
+              <Button
+                disabled={isLoading}
+                type="primary"
+                ghost
+                danger
+                style={{ padding: "20px 40px" }}
+                onClick={() => form.resetFields()}
+              >
+                Reset all fields
+              </Button>
+              {/* Khi bấm submit thì form này sẽ truyền value vào handleAddNewProduct */}
+              {/* Nếu không đầy đủ dữ liệu không cho submit lên */}
+              <Button
+                disabled={isLoading}
+                type={"primary"}
+                style={{ padding: "20px 40px" }}
+                onClick={() => form.submit()}
+              >
+                Publish
+              </Button>
+            </Space>
           </div>
-        </Form>
-        <div className="text-end mt-4">
-          <Space>
-            <Button
-              disabled={isLoading}
-              type="primary"
-              ghost
-              danger
-              style={{ padding: "20px 40px" }}
-              onClick={() => form.resetFields()}
-            >
-              Reset all fields
-            </Button>
-            {/* Khi bấm submit thì form này sẽ truyền value vào handleAddNewProduct */}
-            {/* Nếu không đầy đủ dữ liệu không cho submit lên */}
-            <Button
-              disabled={isLoading}
-              type={"primary"}
-              style={{ padding: "20px 40px" }}
-              onClick={() => form.submit()}
-            >
-              Publish
-            </Button>
-          </Space>
-        </div>
-        {/* Kết nối với form trên */}
-      </Card>
+          {/* Kết nối với form trên */}
+        </Card>
 
-      <CategoryModal
-        visible={isVisibleAddNewCategory}
-        onClose={() => setIsVisibleAddNewCategory(false)}
-        onReload={handleGetCategories}
-      />
-
-      <BrandModal
-        visible={isVisibleAddNewBrand}
-        onClose={() => setIsVisibleAddNewBrand(false)}
-        onReload={handleGetBrands}
-      />
-
-      {/* ẩn đi input này sau đó dùng useRef gắn địa chỉ input này vào button - lúc này nhấn vào button đồng nghĩa đang nhấn vào input này */}
-      <div className="d-none">
-        <input
-          ref={inputRef}
-          type="file"
-          accept="image/*"
-          onChange={(val) => setFiles(val.target.files)}
+        <CategoryModal
+          visible={isVisibleAddNewCategory}
+          onClose={() => setIsVisibleAddNewCategory(false)}
+          onReload={handleGetCategories}
         />
+
+        <BrandModal
+          visible={isVisibleAddNewBrand}
+          onClose={() => setIsVisibleAddNewBrand(false)}
+          onReload={handleGetBrands}
+        />
+
+        {/* ẩn đi input này sau đó dùng useRef gắn địa chỉ input này vào button - lúc này nhấn vào button đồng nghĩa đang nhấn vào input này */}
+        <div className="d-none">
+          <input
+            ref={inputRef}
+            type="file"
+            accept="image/*"
+            onChange={(val) => setFiles(val.target.files)}
+          />
+        </div>
       </div>
-    </div>
+    </>
   );
 };
 

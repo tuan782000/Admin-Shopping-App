@@ -3,14 +3,24 @@ import { Button, Image, Modal, Space, Tooltip, message } from "antd";
 import Table, { ColumnProps } from "antd/es/table";
 import Link from "next/link";
 import React, { useEffect, useState } from "react";
-import { BiTrash } from "react-icons/bi";
+import { BiPencil, BiTrash } from "react-icons/bi";
 import { handleBrandAPI } from "../api/brandAPI";
+import { deleteObject, ref } from "firebase/storage";
+import { storageFirebase } from "@/firebase/firebaseConfig";
+import { BrandModal } from "@/modals";
+import { PlusOutlined } from "@ant-design/icons";
+import { BsEye } from "react-icons/bs";
 
 const { confirm } = Modal;
 
 const Brands = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [brands, setBrands] = useState<BrandModel[]>([]);
+  const [brandSelected, setBrandSelected] = useState<BrandModel>();
+
+  const [isVisibleBrand, setIsVisibleBrand] = useState(false);
+  const [isDetail, setIsDetail] = useState(false);
+
   useEffect(() => {
     handleGetBrand();
   }, []);
@@ -32,7 +42,7 @@ const Brands = () => {
     }
   };
 
-  const handleRemoveBrand = async (id: String) => {
+  const handleRemoveBrand = async (id: String, imageURL: any) => {
     // console.log(`Delete ${id}`);
 
     setIsLoading(true);
@@ -40,6 +50,13 @@ const Brands = () => {
 
     try {
       await handleBrandAPI(api, undefined, "delete");
+
+      // xoá hình trong firebase
+      if (imageURL) {
+        const desertRef = ref(storageFirebase, imageURL);
+        await deleteObject(desertRef);
+      }
+
       await handleGetBrand();
 
       message.success("Remove brand successfully");
@@ -49,6 +66,10 @@ const Brands = () => {
       setIsLoading(false);
     }
   };
+
+  // const handleRemoveImageBrand = async () => {
+
+  // }
 
   const columns: ColumnProps<BrandModel>[] = [
     {
@@ -77,13 +98,35 @@ const Brands = () => {
       align: "right",
       render: (item: BrandModel) => (
         <Space>
+          <Tooltip title={`Detail ${item.title}`}>
+            <Button
+              type="text"
+              icon={<BsEye size={20} color={"#1e90ff"} />}
+              onClick={() => {
+                setIsDetail(true);
+                setBrandSelected(item);
+                setIsVisibleBrand(true);
+              }}
+            />
+          </Tooltip>
+          <Tooltip title={`Edit ${item.title}`}>
+            <Button
+              type="text"
+              icon={<BiPencil size={20} color={"#FFDF00"} />}
+              onClick={() => {
+                setBrandSelected(item);
+                console.log(item);
+                setIsVisibleBrand(true);
+              }}
+            />
+          </Tooltip>
           <Tooltip title={`Remove ${item.title}`}>
             <Button
               onClick={() =>
                 confirm({
                   title: "Remove",
                   content: `Are you sure you want to delete ${item.title}?`,
-                  onOk: () => handleRemoveBrand(item._id),
+                  onOk: () => handleRemoveBrand(item._id, item.imageURL),
                   okText: "Delete", // button xoá trong modal
                 })
               }
@@ -100,12 +143,32 @@ const Brands = () => {
     <div>
       <div className="mb-3 row">
         <div className="col text-end">
-          <Link href={"/brands/add-new"} className="btn btn-sm btn-success">
+          {/* <Link href={"/brands/add-new"} className="btn btn-sm btn-success">
             Add new
-          </Link>
+          </Link> */}
+          <Button
+            onClick={() => setIsVisibleBrand(true)}
+            iconPosition="start"
+            icon={<PlusOutlined />}
+            style={{ backgroundColor: "#198754", color: "white" }}
+          >
+            Add New
+          </Button>
         </div>
       </div>
       <Table loading={isLoading} dataSource={brands} columns={columns} />
+
+      <BrandModal
+        visible={isVisibleBrand}
+        onClose={() => {
+          setBrandSelected(undefined);
+          setIsVisibleBrand(false);
+          setIsDetail(false);
+        }}
+        onReload={handleGetBrand}
+        brand={brandSelected}
+        detail={isDetail}
+      />
     </div>
   );
 };

@@ -2,8 +2,13 @@ import { storageFirebase } from "@/firebase/firebaseConfig";
 import { BrandModel } from "@/models/BrandModel";
 import { handleBrandAPI } from "@/pages/api/brandAPI";
 import { Avatar, Button, Form, Image, Input, Modal, message } from "antd";
-import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
-import React, { useRef, useState } from "react";
+import {
+  deleteObject,
+  getDownloadURL,
+  ref,
+  uploadBytes,
+} from "firebase/storage";
+import React, { useEffect, useRef, useState } from "react";
 import { FaTimesCircle } from "react-icons/fa";
 
 type Props = {
@@ -11,27 +16,34 @@ type Props = {
   onClose: () => void; // đóng form
   onReload?: () => void; // khi submit nó sẽ làm việc gì đó
   brand?: BrandModel;
-  detail?: BrandModel;
+  detail?: boolean;
 };
 
 const BrandModal = (props: Props) => {
   const { visible, onClose, onReload, brand, detail } = props;
-
-  const [files, setFiles] = useState<any>();
-
   const [isLoading, setIsLoading] = useState(false);
 
   const [form] = Form.useForm();
-  const inputRef = useRef<any>();
+
+  useEffect(() => {
+    if (brand) {
+      form.setFieldsValue(brand);
+      setFiles(brand.imageURL);
+    }
+  }, [detail, brand]);
 
   const handleClose = () => {
     form.resetFields();
+    handleDeleteFile();
     onClose();
   };
 
-  const handleAddBrand = async (values: any) => {
+  const [files, setFiles] = useState<any>();
+  const inputRef = useRef<any>();
+
+  const handleBrand = async (values: any) => {
     setIsLoading(true);
-    const api = "/add-brand";
+    const api = brand ? `/edit-brand/${brand._id}` : "/add-brand";
     const data = { ...values };
 
     if (files) {
@@ -46,10 +58,18 @@ const BrandModal = (props: Props) => {
       data.imageURL = downloadURL;
     }
 
-    try {
-      await handleBrandAPI(api, data, "post");
+    /*
+        // xoá hình trong firebase
+    if (brand?.imageURL) {
+      const desertRef = ref(storageFirebase, brand?.imageURL);
+      await deleteObject(desertRef);
+    }
+    */
 
-      message.success("Added brand success");
+    try {
+      await handleBrandAPI(api, data, brand ? "put" : "post");
+
+      message.success(brand ? "Updated brand success" : "Added brand success");
 
       handleClose();
 
@@ -61,7 +81,7 @@ const BrandModal = (props: Props) => {
     }
   };
 
-  const handleDeleteFile = () => {
+  const handleDeleteFile = async () => {
     // khi xoá sẽ cập nhật setFile đồng thời set ref về rỗng để xoá hẳn
     setFiles(undefined);
     if (inputRef.current) {
@@ -69,12 +89,36 @@ const BrandModal = (props: Props) => {
     }
   };
 
-  return detail ? (
-    <Modal title="Detail"></Modal>
+  return detail && brand ? (
+    <Modal
+      open={visible}
+      onClose={handleClose}
+      onCancel={handleClose}
+      title="Detail Brand"
+      footer={null}
+    >
+      <p style={{ fontSize: 18 }}>Title: {brand.title}</p>
+      {brand.description && (
+        <p style={{ fontSize: 18 }}>Description: {brand.description}</p>
+      )}
+      {brand.imageURL && (
+        <div style={{ width: "100%", textAlign: "center" }}>
+          <p style={{ fontSize: 18, textAlign: "left" }}>Image:</p>
+          <Image
+            src={brand.imageURL}
+            alt={brand.title}
+            style={{
+              width: 150,
+              height: 150,
+            }}
+          />
+        </div>
+      )}
+    </Modal>
   ) : (
     <Modal
-      title={brand ? "Edit brand" : "Add new brand"}
       open={visible}
+      title={brand ? "Edit brand" : "Add new brand"}
       onCancel={handleClose}
       onClose={handleClose}
       onOk={() => form.submit()}
@@ -82,24 +126,24 @@ const BrandModal = (props: Props) => {
       okButtonProps={{
         loading: isLoading,
       }}
-      okText="Create"
+      okText={brand ? "Update" : "Create"}
     >
       <Form
-        onFinish={handleAddBrand}
+        onFinish={handleBrand}
         disabled={isLoading}
         layout="vertical"
         size="large"
         form={form}
       >
         <div className="mb-4">
-          {files && (
+          {files ? (
             <div
               className="mb-4"
               style={{ position: "relative", width: 150, height: 100 }}
             >
               <Image
                 style={{ width: 150, height: 100, objectFit: "cover" }}
-                src={URL.createObjectURL(files[0])}
+                src={brand ? files : URL.createObjectURL(files[0])}
               />
               <FaTimesCircle
                 style={{
@@ -113,10 +157,14 @@ const BrandModal = (props: Props) => {
                 onClick={handleDeleteFile}
               />
             </div>
+          ) : (
+            <Button
+              disabled={isLoading}
+              onClick={() => inputRef.current.click()}
+            >
+              Upload Image
+            </Button>
           )}
-          <Button disabled={isLoading} onClick={() => inputRef.current.click()}>
-            Upload Image
-          </Button>
         </div>
         <Form.Item
           name={"title"}
