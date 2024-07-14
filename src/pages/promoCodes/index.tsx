@@ -1,39 +1,36 @@
-import { BrandModel } from "@/models/BrandModel";
-import { Button, Image, Modal, Space, Tooltip, message } from "antd";
+import { PromoModal } from "@/modals";
+import { PromoModel } from "@/models/PromoModel";
+import { PlusOutlined } from "@ant-design/icons";
+import { Button, Modal, Space, Tooltip, message } from "antd";
 import Table, { ColumnProps } from "antd/es/table";
-import Link from "next/link";
 import React, { useEffect, useState } from "react";
 import { BiPencil, BiTrash } from "react-icons/bi";
-import { handleBrandAPI } from "../api/brandAPI";
-import { deleteObject, ref } from "firebase/storage";
-import { storageFirebase } from "@/firebase/firebaseConfig";
-import { BrandModal } from "@/modals";
-import { PlusOutlined } from "@ant-design/icons";
 import { BsEye } from "react-icons/bs";
+import { handlePromoCodeAPI } from "../api/promoCodeAPI";
+import dayjs from "dayjs";
 
 const { confirm } = Modal;
 
-const Brands = () => {
+const PromoCode = () => {
   const [isLoading, setIsLoading] = useState(false);
-  const [brands, setBrands] = useState<BrandModel[]>([]);
-  const [brandSelected, setBrandSelected] = useState<BrandModel>();
+  const [promoCodes, setPromoCodes] = useState<PromoModel[]>([]);
+  const [promoCodeSelected, setPromoCodeSelected] = useState<PromoModel>();
 
-  const [isVisibleBrand, setIsVisibleBrand] = useState(false);
+  const [isVisiblePromoCode, setIsVisiblePromoCode] = useState(false);
   const [isDetail, setIsDetail] = useState(false);
-
   useEffect(() => {
-    handleGetBrand();
+    handleGetPromoCode();
   }, []);
 
-  const handleGetBrand = async () => {
+  const handleGetPromoCode = async () => {
     setIsLoading(true);
-    const api = "/all-brands";
+    const api = `/all-promoCode`;
 
     try {
-      const res = await handleBrandAPI(api, "get");
+      const res = await handlePromoCodeAPI(api, "get");
 
       if (res && res.data) {
-        setBrands(res.data);
+        setPromoCodes(res.data);
       }
     } catch (error: any) {
       message.error(error.message);
@@ -42,24 +39,17 @@ const Brands = () => {
     }
   };
 
-  const handleRemoveBrand = async (id: String, imageURL: any) => {
-    // console.log(`Delete ${id}`);
-
+  const handleRemoveCode = async (id: string) => {
     setIsLoading(true);
-    const api = `/remove-brand?id=${id}`;
+    const api = `/remove-promoCode?id=${id}`;
+
+    console.log(id);
 
     try {
-      await handleBrandAPI(api, undefined, "delete");
+      await handlePromoCodeAPI(api, undefined, "delete");
+      await handleGetPromoCode();
 
-      // xoá hình trong firebase
-      if (imageURL) {
-        const desertRef = ref(storageFirebase, imageURL);
-        await deleteObject(desertRef);
-      }
-
-      await handleGetBrand();
-
-      message.success("Remove brand successfully");
+      message.success("Remove promocode successfully");
     } catch (error: any) {
       message.error(error.message);
     } finally {
@@ -67,36 +57,43 @@ const Brands = () => {
     }
   };
 
-  // const handleRemoveImageBrand = async () => {
-
-  // }
-
-  const columns: ColumnProps<BrandModel>[] = [
-    {
-      key: "img",
-      dataIndex: "imageURL",
-      render: (url: string) => (
-        <Image
-          src={url}
-          width={100}
-          height={100}
-          style={{ objectFit: "cover" }}
-        />
-      ),
-    },
+  const columns: ColumnProps<PromoModel>[] = [
     {
       key: "title",
       dataIndex: "title",
       title: "Title",
       // sort
-      sorter: (a: BrandModel, b: BrandModel) => a.title.localeCompare(b.title),
+      sorter: (a: PromoModel, b: PromoModel) => a.title.localeCompare(b.title),
+    },
+    {
+      key: "code",
+      dataIndex: "code",
+      title: "Code",
+    },
+    {
+      key: "percent",
+      dataIndex: "percent",
+      title: "Percent",
+      render: (percent) => percent + "%",
+    },
+    {
+      key: "start",
+      dataIndex: "start",
+      title: "Start",
+      render: (start) => (start ? dayjs(start).format("DD/MM/YYYY") : "N/A"),
+    },
+    {
+      key: "end",
+      dataIndex: "end",
+      title: "End",
+      render: (end) => (end ? dayjs(end).format("DD/MM/YYYY") : "N/A"),
     },
     {
       key: "btn",
       dataIndex: "",
       title: "Actions",
       align: "right",
-      render: (item: BrandModel) => (
+      render: (item: PromoModel) => (
         <Space>
           <Tooltip title={`Detail ${item.title}`}>
             <Button
@@ -104,8 +101,8 @@ const Brands = () => {
               icon={<BsEye size={20} color={"#1e90ff"} />}
               onClick={() => {
                 setIsDetail(true);
-                setBrandSelected(item);
-                setIsVisibleBrand(true);
+                setPromoCodeSelected(item);
+                setIsVisiblePromoCode(true);
               }}
             />
           </Tooltip>
@@ -114,9 +111,9 @@ const Brands = () => {
               type="text"
               icon={<BiPencil size={20} color={"#FFDF00"} />}
               onClick={() => {
-                setBrandSelected(item);
-                console.log(item);
-                setIsVisibleBrand(true);
+                setPromoCodeSelected(item);
+                // console.log(item);
+                setIsVisiblePromoCode(true);
               }}
             />
           </Tooltip>
@@ -126,7 +123,7 @@ const Brands = () => {
                 confirm({
                   title: "Remove",
                   content: `Are you sure you want to delete ${item.title}?`,
-                  onOk: () => handleRemoveBrand(item._id, item.imageURL),
+                  onOk: () => handleRemoveCode(item._id),
                   okText: "Delete", // button xoá trong modal
                 })
               }
@@ -143,11 +140,8 @@ const Brands = () => {
     <div>
       <div className="mb-3 row">
         <div className="col text-end">
-          {/* <Link href={"/brands/add-new"} className="btn btn-sm btn-success">
-            Add new
-          </Link> */}
           <Button
-            onClick={() => setIsVisibleBrand(true)}
+            onClick={() => setIsVisiblePromoCode(true)}
             iconPosition="start"
             icon={<PlusOutlined />}
             style={{ backgroundColor: "#198754", color: "white" }}
@@ -158,11 +152,12 @@ const Brands = () => {
       </div>
       <Table
         loading={isLoading}
-        dataSource={brands}
+        dataSource={promoCodes}
         columns={columns}
         rowKey="_id"
       />
 
+      {/* 
       <BrandModal
         visible={isVisibleBrand}
         onClose={() => {
@@ -174,8 +169,20 @@ const Brands = () => {
         brand={brandSelected}
         detail={isDetail}
       />
+      */}
+      <PromoModal
+        visible={isVisiblePromoCode}
+        onClose={() => {
+          setPromoCodeSelected(undefined);
+          setIsVisiblePromoCode(false);
+          setIsDetail(false);
+        }}
+        onReload={handleGetPromoCode}
+        promoCode={promoCodeSelected}
+        detail={isDetail}
+      />
     </div>
   );
 };
 
-export default Brands;
+export default PromoCode;

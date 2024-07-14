@@ -7,6 +7,7 @@ import {
 import { Layout, Menu } from "antd";
 import Link from "next/link";
 import React, { useEffect, useState } from "react";
+import { HiOutlineReceiptPercent } from "react-icons/hi2";
 
 const { Sider } = Layout;
 
@@ -42,6 +43,11 @@ const SiderComponent = () => {
             key: "Categories",
             icon: <ApartmentOutlined />,
             label: <Link href="/categories">Categories</Link>,
+          },
+          {
+            key: "PromoCodes",
+            icon: <HiOutlineReceiptPercent />,
+            label: <Link href="/promoCodes">PromoCodes</Link>,
           },
         ]}
       />

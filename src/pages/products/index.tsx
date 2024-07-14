@@ -154,7 +154,12 @@ const Products = () => {
           </Link>
         </div>
       </div>
-      <Table loading={isLoading} dataSource={products} columns={columns} />
+      <Table
+        loading={isLoading}
+        dataSource={products}
+        columns={columns}
+        rowKey="_id"
+      />
     </div>
   );
 };

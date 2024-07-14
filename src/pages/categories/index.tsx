@@ -131,7 +131,12 @@ const Categories = () => {
           </Button>
         </div>
       </div>
-      <Table loading={isLoading} dataSource={categories} columns={columns} />
+      <Table
+        loading={isLoading}
+        dataSource={categories}
+        columns={columns}
+        rowKey="_id"
+      />
 
       <CategoryModal
         visible={isVisibleCategory}
