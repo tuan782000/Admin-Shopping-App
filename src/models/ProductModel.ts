@@ -13,4 +13,5 @@ export interface ProductModel {
   _id: string;
   rate: any;
   brands: string;
+  slug: string;
 }

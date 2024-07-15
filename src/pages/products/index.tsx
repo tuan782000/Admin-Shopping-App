@@ -19,6 +19,12 @@ const Products = () => {
     handleGetProducts();
   }, []);
 
+  // useEffect(() => {
+  //   if (router.query.reload) {
+  //     handleGetProducts();
+  //   }
+  // }, [router.query.reload]);
+
   const handleGetProducts = async () => {
     setIsLoading(true);
     const api = "/all-products";

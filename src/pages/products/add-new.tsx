@@ -22,6 +22,7 @@ import { storageFirebase } from "@/firebase/firebaseConfig";
 import { useSearchParams } from "next/navigation";
 import { LeftOutlined } from "@ant-design/icons";
 import { useRouter } from "next/router";
+import { replaceName } from "@/utils/replaceName";
 
 const AddNewProduct = () => {
   const [files, setFiles] = useState<any>();
@@ -59,6 +60,11 @@ const AddNewProduct = () => {
     id && getProductDetailById(id);
   }, [id]);
 
+  // const replaceTitle = (title: string) => {
+  //   let renameTitle = title.trim();
+  //   renameTitle = renameTitle.replace(replaceName)
+  // };
+
   // vừa là thêm mới - vừa là sử
   const handleAddNewProduct = async (values: any) => {
     // setIsLoading(true);
@@ -94,6 +100,9 @@ const AddNewProduct = () => {
       // const res = await handleProductAPI(api, data, "post");
 
       // console.log(res);
+      data.slug = replaceName(values.title);
+
+      console.log(data);
 
       await handleProductAPI(api, data, id ? "put" : "post");
       message.success(
@@ -103,8 +112,9 @@ const AddNewProduct = () => {
       handleDeleteFile();
 
       window.history.back();
+      // router.push("/?reload=true"); // Điều hướng về trang index với query parameter reload
 
-      console.log(data);
+      // console.log(data);
     } catch (error: any) {
       console.log(error);
       message.error(error.message);
